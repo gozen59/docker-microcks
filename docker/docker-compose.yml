@@ -1,0 +1,75 @@
+networks:
+  default:
+    external: true
+    name: lb-common
+  microcks:
+    external: false
+    name: microcks
+
+services:
+  mongo:
+    image: mongo:4.4.29
+    container_name: microcks-db
+    networks:
+      - microcks
+    labels:
+      - "traefik.enable=false"
+    volumes:
+      - "${PWD}/docker/data:/data/db"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.4
+    container_name: microcks-sso
+    networks:
+      - default
+      - microcks
+    labels:
+      - "traefik.enable=true"
+
+      - "traefik.http.routers.keycloack.entrypoints=web"
+      - "traefik.http.routers.keycloack.rule=Host(`microcks-kc.localhost`)"
+      - "traefik.http.routers.keycloack.service=svc_keycloack"
+      - "traefik.http.services.svc_keycloack.loadbalancer.server.port=8080"
+    environment:
+      KEYCLOAK_ADMIN: "admin"
+      KEYCLOAK_ADMIN_PASSWORD: "admin"
+      KC_HOSTNAME_ADMIN_URL: "http://microcks-kc.localhost"
+      KC_HOSTNAME_URL: "http://microcks-kc.localhost"
+    volumes:
+      - "./keycloak-realm/microcks-realm-sample.json:/opt/keycloak/data/import/microcks-realm.json"
+    command:  ["start-dev", "--import-realm"]
+
+  postman:
+    image: quay.io/microcks/microcks-postman-runtime:latest
+    container_name: microcks-postman-runtime
+    networks:
+      - microcks
+
+  app:
+    depends_on:
+      - mongo
+      - keycloak
+      - postman
+    image: quay.io/microcks/microcks:1.10.0
+    container_name: microcks
+    networks:
+      - default
+      - microcks
+    labels:
+      - "traefik.enable=true"
+
+      - "traefik.http.routers.microcks.entrypoints=web"
+      - "traefik.http.routers.microcks.rule=Host(`microcks.localhost`)"
+      - "traefik.http.routers.microcks.service=svc_microcks"
+      - "traefik.http.services.svc_microcks.loadbalancer.server.port=8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017
+      - SPRING_DATA_MONGODB_DATABASE=microcks
+      - POSTMAN_RUNNER_URL=http://postman:3000
+      - TEST_CALLBACK_URL=http://microcks.localhost
+      - SERVICES_UPDATE_INTERVAL=0 0 0/2 * * *
+      - KEYCLOAK_URL=http://keycloak:8080
+      - KEYCLOAK_PUBLIC_URL=http://microcks-kc.localhost
+      - JAVA_OPTIONS=-Dspring.security.oauth2.resourceserver.jwt.issuer-uri=http://microcks-kc.localhost/realms/microcks -Dspring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://keycloak:8080/realms/microcks/protocol/openid-connect/certs
+      #- MAX_UPLOAD_FILE_SIZE=3MB
