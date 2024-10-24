@@ -16,6 +16,11 @@ start: ## Start the Microcks docker container
 .PHONY: stop
 stop: ## Stopping running Microcks instances
 	$(info $(M) Stopping Microcks instance)
+	@docker-compose -f ./docker/docker-compose.yml stop
+
+.PHONY: down
+down: ## Stopping and removes running Microcks instances
+	$(info $(M) Stopping Microcks instance)
 	@docker-compose -f ./docker/docker-compose.yml down
 
 .DEFAULT_GOAL := help

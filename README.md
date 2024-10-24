@@ -26,3 +26,9 @@ make start
 ```bash
 make stop
 ```
+
+## Stops and removes the container
+
+```bash
+make down
+```
