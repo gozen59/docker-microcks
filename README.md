@@ -1,6 +1,6 @@
 # Microcks Application (Under Docker)
 
-Microcks mocking eco-system running under docker.
+Microcks mocking eco-system running under docker (https://github.com/microcks/microcks).
 
 Composed of : 
 - Microcks App
