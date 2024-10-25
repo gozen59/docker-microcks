@@ -37,16 +37,15 @@ services:
     image: quay.io/microcks/microcks:1.10.1
     container_name: microcks
     volumes:
-      - "./config:/deployments/config"
+      - "${PWD}/config:/deployments/config"
     
     labels:
       - "traefik.enable=true"
-
       - "traefik.http.routers.microcks.entrypoints=web"
       - "traefik.http.routers.microcks.rule=Host(`microcks.localhost`)"
       - "traefik.http.routers.microcks.service=svc_microcks"
       - "traefik.http.services.svc_microcks.loadbalancer.server.port=8080"
-      
+
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017
