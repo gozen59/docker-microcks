@@ -37,7 +37,7 @@ services:
     image: quay.io/microcks/microcks:1.10.1
     container_name: microcks
     volumes:
-      - "${PWD}/config:/deployments/config"
+      - "${PWD}/docker/config:/deployments/config"
     
     labels:
       - "traefik.enable=true"
